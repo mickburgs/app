@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import {GameMode} from "../types/GameMode";
 
 const MenuScreen = ({ navigation }) => {
     const handleModeSelection = (mode) => {
@@ -12,13 +13,13 @@ const MenuScreen = ({ navigation }) => {
             <Text style={styles.subtitle}>Voor Nolan en Lola</Text>
             <TouchableOpacity
                 style={styles.button}
-                onPress={() => handleModeSelection('single')}
+                onPress={() => handleModeSelection(GameMode.Single)}
             >
                 <Text style={styles.buttonText}>Alleen spelen</Text>
             </TouchableOpacity>
             <TouchableOpacity
                 style={styles.button}
-                onPress={() => handleModeSelection('multi')}
+                onPress={() => handleModeSelection(GameMode.Multi)}
             >
                 <Text style={styles.buttonText}>Samen spelen</Text>
             </TouchableOpacity>
