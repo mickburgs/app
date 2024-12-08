@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Animated } from 'react-native';
+import ConfettiCannon from 'react-native-confetti-cannon';
 
 const TicTacToeScreen = ({ route }) => {
     const { mode } = route.params;
@@ -7,6 +8,18 @@ const TicTacToeScreen = ({ route }) => {
     const [isXNext, setIsXNext] = useState(true);
     const [winner, setWinner] = useState(null);
     const [isLocked, setIsLocked] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
+    const boardGlow = useRef(new Animated.Value(0)).current;
+    const winningCombinations = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6],
+    ];
 
     const handlePress = (index) => {
         if (board[index] !== null || winner || isLocked) return;
@@ -17,7 +30,7 @@ const TicTacToeScreen = ({ route }) => {
 
         const gameWinner = checkWinner(newBoard);
         if (gameWinner) {
-            setWinner(gameWinner);
+            setGameWinner(gameWinner);
         } else {
             if (mode === 'single' && isXNext) {
                 setIsLocked(true);
@@ -27,7 +40,39 @@ const TicTacToeScreen = ({ route }) => {
         }
     };
 
+    const setGameWinner = (winner) => {
+        setWinner(winner);
+
+        if (winner === 'O' && mode === 'single') {
+            startGlowAnimation();
+        } else {
+            setShowConfetti(true);
+        }
+    };
+
     const makeAIMove = (board) => {
+        for (let combination of winningCombinations) {
+            const [a, b, c] = combination;
+            if (board[a] === 'O' && board[b] === 'O' && board[c] === null) {
+                board[c] = 'O';
+                setBoard([...board]);
+                setGameWinner('O');
+                return;
+            }
+            if (board[a] === 'O' && board[c] === 'O' && board[b] === null) {
+                board[b] = 'O';
+                setBoard([...board]);
+                setGameWinner('O');
+                return;
+            }
+            if (board[b] === 'O' && board[c] === 'O' && board[a] === null) {
+                board[a] = 'O';
+                setBoard([...board]);
+                setGameWinner('O');
+                return;
+            }
+        }
+
         const emptyCells = board.map((cell, i) => (cell === null ? i : null)).filter((i) => i !== null);
         const randomMove = emptyCells[Math.floor(Math.random() * emptyCells.length)];
         if (randomMove !== undefined) {
@@ -35,7 +80,7 @@ const TicTacToeScreen = ({ route }) => {
             setBoard([...board]);
             const gameWinner = checkWinner(board);
             if (gameWinner) {
-                setWinner(gameWinner);
+                setGameWinner(gameWinner);
             } else {
                 setIsXNext(true);
             }
@@ -48,19 +93,15 @@ const TicTacToeScreen = ({ route }) => {
         setIsXNext(true);
         setWinner(null);
         setIsLocked(false);
+        setShowConfetti(false);
+        Animated.timing(boardGlow, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: false,
+        }).start();
     };
 
     const checkWinner = (board) => {
-        const winningCombinations = [
-            [0, 1, 2],
-            [3, 4, 5],
-            [6, 7, 8],
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            [0, 4, 8],
-            [2, 4, 6],
-        ];
         for (let combination of winningCombinations) {
             const [a, b, c] = combination;
             if (board[a] && board[a] === board[b] && board[a] === board[c]) {
@@ -68,6 +109,23 @@ const TicTacToeScreen = ({ route }) => {
             }
         }
         return null;
+    };
+
+    const startGlowAnimation = () => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(boardGlow, {
+                    toValue: 1,
+                    duration: 500,
+                    useNativeDriver: false,
+                }),
+                Animated.timing(boardGlow, {
+                    toValue: 0,
+                    duration: 500,
+                    useNativeDriver: false,
+                }),
+            ])
+        ).start();
     };
 
     const renderCell = (index) => (
@@ -89,7 +147,20 @@ const TicTacToeScreen = ({ route }) => {
                     ? `Winnaar: ${winner}`
                     : `Volgende speler: ${isXNext ? 'X' : mode === 'multi' ? 'O' : 'AI'}`}
             </Text>
-            <View style={styles.board}>
+            <Animated.View
+                style={[
+                    styles.board,
+                    {
+                        shadowColor: 'red',
+                        shadowOpacity: boardGlow,
+                        shadowRadius: 20,
+                        borderColor: boardGlow.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ['#333', '#f00'],
+                        }),
+                    },
+                ]}
+            >
                 {[0, 1, 2].map((row) => (
                     <View key={row} style={styles.row}>
                         {renderCell(row * 3)}
@@ -97,7 +168,10 @@ const TicTacToeScreen = ({ route }) => {
                         {renderCell(row * 3 + 2)}
                     </View>
                 ))}
-            </View>
+            </Animated.View>
+            {showConfetti && (
+                <ConfettiCannon count={100} origin={{ x: 150, y: 0 }} fadeOut={true} />
+            )}
             <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
                 <Text style={styles.resetButtonText}>Herstart Spel</Text>
             </TouchableOpacity>

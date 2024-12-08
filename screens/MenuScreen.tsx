@@ -8,19 +8,19 @@ const MenuScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Tic Tac Toe</Text>
-            <Text style={styles.subtitle}>Choose Game Mode</Text>
+            <Text style={styles.title}>Boter kaas en eieren</Text>
+            <Text style={styles.subtitle}>Voor Nolan en Lola</Text>
             <TouchableOpacity
                 style={styles.button}
                 onPress={() => handleModeSelection('single')}
             >
-                <Text style={styles.buttonText}>Singleplayer</Text>
+                <Text style={styles.buttonText}>Alleen spelen</Text>
             </TouchableOpacity>
             <TouchableOpacity
                 style={styles.button}
                 onPress={() => handleModeSelection('multi')}
             >
-                <Text style={styles.buttonText}>Multiplayer</Text>
+                <Text style={styles.buttonText}>Samen spelen</Text>
             </TouchableOpacity>
         </View>
     );
