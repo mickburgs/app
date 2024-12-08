@@ -1,8 +1,10 @@
 import React, {useRef, useState} from 'react';
 import {Animated, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import { globalStyles } from '../components/globalStyles';
 import {GameMode} from "../types/GameMode";
 import {Player, PlayerColor} from "../types/Player";
 import {WinningCombination} from "../types/WinningCombination";
+import {Difficulty} from "../types/Difficulty";
 
 const BOARD_SIZE = 9;
 const EMPTY_BOARD: Player[] = Array(BOARD_SIZE).fill(null);
@@ -19,7 +21,7 @@ const winningCombinations = [
 const AI_PLAYER = Player.O;
 
 const TicTacToeScreen = ({route}) => {
-    const {mode} = route.params;
+    const {mode, difficulty} = route.params;
     const [board, setBoard] = useState(EMPTY_BOARD);
     const [isXNext, setIsXNext] = useState(true);
     const [winner, setWinner] = useState<WinningCombination>(null);
@@ -88,7 +90,7 @@ const TicTacToeScreen = ({route}) => {
 
     const getWinningMove = (board: Player[], a: number, b: number, c: number, player: Player): number => {
         if (playerHasAllButOneInCombination(board, a, b, c, player)) {
-            const emptyCell = [a, b, c].find((index) => board[index] === null);
+            const emptyCell = getEmptyCell(board, a, b, c);
             if (emptyCell) {
                 return emptyCell;
             }
@@ -96,32 +98,63 @@ const TicTacToeScreen = ({route}) => {
         return null;
     };
 
+    const getEmptyCell = (board: Player[], a: number, b: number, c: number): number => {
+        return [a, b, c].find((index) => board[index] === null);
+    }
+
+    const findWinningMove = (board: Player[], player: Player) => {
+        for (let combination of winningCombinations) {
+            const [a, b, c] = combination;
+            const winningMove = getWinningMove(board, a, b, c, player);
+            if (winningMove === null) {
+                continue;
+            }
+            return winningMove;
+        }
+        return null;
+    }
+
     const makeAIMove = (board: Player[]) => {
         for (let combination of winningCombinations) {
             const [a, b, c] = combination;
             const winningMove = getWinningMove(board, a, b, c, AI_PLAYER);
-            if (winningMove === null) continue;
+            if (winningMove === null) {
+                continue;
+            }
             updateBoard(board, winningMove, AI_PLAYER);
             setGameWinner({
+                filledCell: winningMove,
                 indices: [a, b, c],
                 player: AI_PLAYER,
             });
             return;
         }
 
-        const emptyCells = board.map((cell, i) => (cell === null ? i : null)).filter((i) => i !== null);
-        const randomMove = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        if (randomMove !== undefined) {
-            updateBoard(board, randomMove, AI_PLAYER);
-            const gameWinner = getWinningCombination(board);
-            if (gameWinner) {
-                setGameWinner(gameWinner);
-            } else {
-                setIsXNext(true);
-            }
+        const nextMove = getAiMove(board);
+        updateBoard(board, nextMove, AI_PLAYER);
+        const gameWinner = getWinningCombination(board);
+        if (gameWinner) {
+            setGameWinner(gameWinner);
+        } else {
+            setIsXNext(true);
         }
         setIsLocked(false);
     };
+
+    const getAiMove = (board: Player[]): number => {
+        if (difficulty === Difficulty.Hard) {
+            const winningMove = findWinningMove(board, Player.X);
+            if (winningMove !== null) {
+                return winningMove;
+            }
+        }
+        return getRandomMove(board);
+    }
+
+    const getRandomMove = (board: Player[]): number => {
+        const emptyCells = board.map((cell, i) => (cell === null ? i : null)).filter((i) => i !== null);
+        return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    }
 
     const resetGame = () => {
         setBoard(EMPTY_BOARD);
@@ -137,11 +170,13 @@ const TicTacToeScreen = ({route}) => {
             useNativeDriver: false,
         }).start();
     };
+
     const getWinningCombination = (board): WinningCombination => {
         for (let combination of winningCombinations) {
             const [a, b, c] = combination;
             if (board[a] && board[a] === board[b] && board[a] === board[c]) {
                 return {
+                    filledCell: getEmptyCell(board, a, b, c),
                     indices: [a, b, c],
                     player: board[a],
                 };
@@ -195,7 +230,7 @@ const TicTacToeScreen = ({route}) => {
     }
 
     return (
-        <View style={styles.container}>
+        <View style={globalStyles.container}>
             <Text
                 style={[
                     styles.status,
@@ -239,13 +274,6 @@ const TicTacToeScreen = ({route}) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f7f7f7',
-        paddingHorizontal: 20,
-    },
     status: {
         fontSize: 20,
         fontWeight: '600',
