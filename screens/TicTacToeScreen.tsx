@@ -1,14 +1,11 @@
 import React, {useRef, useState} from 'react';
 import {Animated, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import ConfettiCannon from 'react-native-confetti-cannon';
 import {GameMode} from "../types/GameMode";
-import {Player} from "../types/Player";
+import {Player, PlayerColor} from "../types/Player";
 import {WinningCombination} from "../types/WinningCombination";
 
-
 const BOARD_SIZE = 9;
-const EMPTY_BOARD: string[] = Array(BOARD_SIZE).fill(null);
-
+const EMPTY_BOARD: Player[] = Array(BOARD_SIZE).fill(null);
 const winningCombinations = [
     [0, 1, 2],
     [3, 4, 5],
@@ -21,26 +18,27 @@ const winningCombinations = [
 ];
 const AI_PLAYER = Player.O;
 
-const TicTacToeScreen = ({ route }) => {
-    const { mode } = route.params;
+const TicTacToeScreen = ({route}) => {
+    const {mode} = route.params;
     const [board, setBoard] = useState(EMPTY_BOARD);
     const [isXNext, setIsXNext] = useState(true);
     const [winner, setWinner] = useState<WinningCombination>(null);
     const [isLocked, setIsLocked] = useState(false);
-    const [showConfetti, setShowConfetti] = useState(false);
-    const boardGlow = useRef(new Animated.Value(0)).current;
 
-    const updateBoard = (board: string[], index: number, player: string): string[] => {
+    const boardGlow = useRef(new Animated.Value(0)).current;
+    const cellAnimations = useRef(Array(BOARD_SIZE).fill(null).map(() => new Animated.Value(1))).current;
+
+    const updateBoard = (board: Player[], index: number, player: Player): Player[] => {
         if (board[index] !== null || winner || isLocked) return;
 
         const newBoard = [...board];
         newBoard[index] = player;
         setBoard(newBoard);
         return newBoard;
-    }
+    };
 
     const handlePress = (index) => {
-        const newBoard = updateBoard(board, index, isXNext ? Player.X: Player.O);
+        const newBoard = updateBoard(board, index, isXNext ? Player.X : Player.O);
         if (!newBoard) return;
 
         const winningCombination = getWinningCombination(newBoard);
@@ -57,25 +55,38 @@ const TicTacToeScreen = ({ route }) => {
     };
 
     const setGameWinner = (win: WinningCombination) => {
-        const winner = win.player;
         setWinner(win);
 
-        if (winner === AI_PLAYER && mode === GameMode.Single) {
-            startGlowAnimation();
-            return
-        }
-
-        setShowConfetti(true);
+        animateWinningCells(win.indices);
+        startGlowAnimation();
     };
 
+    const animateWinningCells = (indices: number[]) => {
+        indices.forEach((index) => {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(cellAnimations[index], {
+                        toValue: 1.5, // Scale up
+                        duration: 500,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(cellAnimations[index], {
+                        toValue: 1, // Scale down
+                        duration: 500,
+                        useNativeDriver: true,
+                    }),
+                ])
+            ).start();
+        });
+    };
 
-    function playerHasAllButOneInCombination(board: string[], a: number, b: number, c: number, player: Player) {
+    const playerHasAllButOneInCombination = (board: string[], a: number, b: number, c: number, player: Player) => {
         return [board[a], board[b], board[c]]
             .filter((cell) => cell === player)
             .length === 2;
-    }
+    };
 
-    const getWinningMove = (board: string[], a: number, b: number, c: number, player: Player): number => {
+    const getWinningMove = (board: Player[], a: number, b: number, c: number, player: Player): number => {
         if (playerHasAllButOneInCombination(board, a, b, c, player)) {
             const emptyCell = [a, b, c].find((index) => board[index] === null);
             if (emptyCell) {
@@ -83,9 +94,9 @@ const TicTacToeScreen = ({ route }) => {
             }
         }
         return null;
-    }
+    };
 
-    const makeAIMove = (board: string[]) => {
+    const makeAIMove = (board: Player[]) => {
         for (let combination of winningCombinations) {
             const [a, b, c] = combination;
             const winningMove = getWinningMove(board, a, b, c, AI_PLAYER);
@@ -117,14 +128,15 @@ const TicTacToeScreen = ({ route }) => {
         setIsXNext(true);
         setWinner(null);
         setIsLocked(false);
-        setShowConfetti(false);
+
+        cellAnimations.forEach((anim) => anim.setValue(1));
+
         Animated.timing(boardGlow, {
             toValue: 0,
             duration: 300,
             useNativeDriver: false,
         }).start();
     };
-
     const getWinningCombination = (board): WinningCombination => {
         for (let combination of winningCombinations) {
             const [a, b, c] = combination;
@@ -161,15 +173,35 @@ const TicTacToeScreen = ({ route }) => {
             onPress={() => handlePress(index)}
             disabled={isLocked}
         >
-            <Text style={[styles.cellText, board[index] === Player.X ? styles.xText : styles.oText]}>
-                {board[index]}
-            </Text>
+            <Animated.View
+                style={{
+                    transform: [{scale: cellAnimations[index]}],
+                }}
+            >
+                <Text style={[styles.cellText, {color: getPlayerColor(board[index])}]}>
+                    {board[index]}
+                </Text>
+            </Animated.View>
         </TouchableOpacity>
     );
 
+    const getPlayerColor = (player: Player): string => {
+        if (!player) return '#555';
+        return PlayerColor[player];
+    }
+
+    const getPostGameColor = () => {
+        return getPlayerColor(winner?.player);
+    }
+
     return (
         <View style={styles.container}>
-            <Text style={styles.status}>
+            <Text
+                style={[
+                    styles.status,
+                    {color: getPostGameColor()},
+                ]}
+            >
                 {winner
                     ? `Winnaar: ${winner.player}`
                     : `Volgende speler: ${isXNext ? Player.X : Player.O}`}
@@ -178,12 +210,15 @@ const TicTacToeScreen = ({ route }) => {
                 style={[
                     styles.board,
                     {
-                        shadowColor: 'red',
+                        shadowColor: 'black',
                         shadowOpacity: boardGlow,
                         shadowRadius: 20,
                         borderColor: boardGlow.interpolate({
                             inputRange: [0, 1],
-                            outputRange: ['#333', '#f00'],
+                            outputRange: [
+                                'black',
+                                getPostGameColor()
+                            ],
                         }),
                     },
                 ]}
@@ -196,9 +231,6 @@ const TicTacToeScreen = ({ route }) => {
                     </View>
                 ))}
             </Animated.View>
-            {showConfetti && (
-                <ConfettiCannon count={100} origin={{ x: 150, y: 0 }} fadeOut={true} />
-            )}
             <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
                 <Text style={styles.resetButtonText}>Herstart Spel</Text>
             </TouchableOpacity>
@@ -217,7 +249,6 @@ const styles = StyleSheet.create({
     status: {
         fontSize: 20,
         fontWeight: '600',
-        color: '#555',
         marginBottom: 20,
     },
     board: {
@@ -244,12 +275,6 @@ const styles = StyleSheet.create({
     cellText: {
         fontSize: 36,
         fontWeight: 'bold',
-    },
-    xText: {
-        color: '#ff5a5a',
-    },
-    oText: {
-        color: '#4caf50',
     },
     resetButton: {
         marginTop: 20,
