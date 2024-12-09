@@ -1,25 +1,40 @@
 {
   "expo": {
-    "name": "App",
-    "slug": "app",
-    "version": "1.0.0",
+    "name": "Boter kaas en eiren",
+    "slug": "boter-kaas-en-eieren",
+    "icon": "./assets/icon.png",
+    "version": "1.0.1",
     "platforms": [
       "ios",
       "android",
       "web"
     ],
     "android": {
-      "package": "nl.mick.tictactoe"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "fb713348-9797-4595-97df-babdb8fb1c6b"
+      "package": "nl.mick.tictactoe",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#4caf50"
       }
     },
     "splash": {
-      "image": "./assets/splash/splashscreen_logo.png",
+      "image": "./assets/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#4caf50"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "822973b5-4cce-4ccd-a540-b4bf19031dd9"
+      }
+    },
+    "owner": "mickburgs",
+    "ios": {
+      "bundleIdentifier": "nl.mick.tictactoe"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/822973b5-4cce-4ccd-a540-b4bf19031dd9"
     }
   }
 }

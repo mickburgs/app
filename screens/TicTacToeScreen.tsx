@@ -1,25 +1,30 @@
 import React, {useRef, useState} from 'react';
 import {Animated, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import { globalStyles } from '../components/globalStyles';
 import {GameMode} from "../types/GameMode";
 import {Player, PlayerColor} from "../types/Player";
 import {WinningCombination} from "../types/WinningCombination";
 import {Difficulty} from "../types/Difficulty";
 import {getWinningCombinations} from "../utils/gameUtils";
+import ScreenWrapper from "../components/ScreenWrapper";
 
-const BOARD_SIZE = 9;
-const EMPTY_BOARD: Player[] = Array(BOARD_SIZE).fill(null);
 const AI_PLAYER = Player.O;
 
 const TicTacToeScreen = ({route}) => {
-    const {mode, difficulty} = route.params;
-    const [board, setBoard] = useState(EMPTY_BOARD);
+    const {mode, difficulty, boardSize} = route.params;
+    const getBoardCells = (boardSize: number): number => {
+        return boardSize * boardSize;
+    };
+    const getEmptyBoard = (size: number): Player[] => {
+        return Array(getBoardCells(size)).fill(null);
+    };
+
+    const [board, setBoard] = useState(getEmptyBoard(boardSize));
     const [isXNext, setIsXNext] = useState(true);
     const [winner, setWinner] = useState<WinningCombination>(null);
     const [isLocked, setIsLocked] = useState(false);
 
     const boardGlow = useRef(new Animated.Value(0)).current;
-    const cellAnimations = useRef(Array(BOARD_SIZE).fill(null).map(() => new Animated.Value(1))).current;
+    const cellAnimations = useRef(Array(getBoardCells(boardSize)).fill(null).map(() => new Animated.Value(1))).current;
 
     const updateBoard = (board: Player[], index: number, player: Player): Player[] => {
         if (board[index] !== null || winner || isLocked) return;
@@ -73,52 +78,39 @@ const TicTacToeScreen = ({route}) => {
         });
     };
 
-    const playerHasAllButOneInCombination = (board: string[], a: number, b: number, c: number, player: Player) => {
-        return [board[a], board[b], board[c]]
-            .filter((cell) => cell === player)
-            .length === 2;
-    };
+    const getWinningMove = (board: Player[], combination: number[], player: Player): number | null => {
+        const playerCells = combination.filter((index) => board[index] === player);
+        const emptyCell = combination.find((index) => board[index] === null);
 
-    const getWinningMove = (board: Player[], a: number, b: number, c: number, player: Player): number => {
-        if (playerHasAllButOneInCombination(board, a, b, c, player)) {
-            const emptyCell = getEmptyCell(board, a, b, c);
-            if (emptyCell) {
-                return emptyCell;
-            }
+        if (emptyCell !== undefined && playerCells.length === combination.length - 1) {
+            return emptyCell;
         }
         return null;
     };
 
-    const getEmptyCell = (board: Player[], a: number, b: number, c: number): number => {
-        return [a, b, c].find((index) => board[index] === null);
-    }
-
-    const findWinningMove = (board: Player[], player: Player) => {
-        for (let combination of getWinningCombinations()) {
-            const [a, b, c] = combination;
-            const winningMove = getWinningMove(board, a, b, c, player);
-            if (winningMove === null) {
-                continue;
+    const findWinningMove = (board: Player[], player: Player): number | null => {
+        for (const combination of getWinningCombinations(boardSize)) {
+            const winningMove = getWinningMove(board, combination, player);
+            if (winningMove !== null) {
+                return winningMove;
             }
-            return winningMove;
         }
         return null;
-    }
+    };
 
     const makeAIMove = (board: Player[]) => {
-        for (let combination of getWinningCombinations()) {
-            const [a, b, c] = combination;
-            const winningMove = getWinningMove(board, a, b, c, AI_PLAYER);
-            if (winningMove === null) {
-                continue;
+        const combinations = getWinningCombinations(boardSize);
+
+        for (const combination of combinations) {
+            const winningMove = getWinningMove(board, combination, AI_PLAYER);
+            if (winningMove !== null) {
+                updateBoard(board, winningMove, AI_PLAYER);
+                setGameWinner({
+                    indices: combination,
+                    player: AI_PLAYER,
+                });
+                return;
             }
-            updateBoard(board, winningMove, AI_PLAYER);
-            setGameWinner({
-                filledCell: winningMove,
-                indices: [a, b, c],
-                player: AI_PLAYER,
-            });
-            return;
         }
 
         const nextMove = getAiMove(board);
@@ -132,8 +124,10 @@ const TicTacToeScreen = ({route}) => {
         setIsLocked(false);
     };
 
+
     const getAiMove = (board: Player[]): number => {
         if (difficulty === Difficulty.Hard) {
+            // Block player X from winning
             const winningMove = findWinningMove(board, Player.X);
             if (winningMove !== null) {
                 return winningMove;
@@ -143,12 +137,14 @@ const TicTacToeScreen = ({route}) => {
     }
 
     const getRandomMove = (board: Player[]): number => {
-        const emptyCells = board.map((cell, i) => (cell === null ? i : null)).filter((i) => i !== null);
+        const emptyCells = board
+            .map((cell, i) => (cell === null ? i : null))
+            .filter((i) => i !== null);
         return emptyCells[Math.floor(Math.random() * emptyCells.length)];
     }
 
     const resetGame = () => {
-        setBoard(EMPTY_BOARD);
+        setBoard(getEmptyBoard(boardSize));
         setIsXNext(true);
         setWinner(null);
         setIsLocked(false);
@@ -162,14 +158,15 @@ const TicTacToeScreen = ({route}) => {
         }).start();
     };
 
-    const getWinningCombination = (board): WinningCombination => {
-        for (let combination of getWinningCombinations()) {
-            const [a, b, c] = combination;
-            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+    const getWinningCombination = (board: Player[]): WinningCombination | null => {
+        for (const combination of getWinningCombinations(boardSize)) {
+            const player = board[combination[0]];
+
+            // Check if all cells in the combination are occupied by the same player
+            if (player && combination.every((index) => board[index] === player)) {
                 return {
-                    filledCell: getEmptyCell(board, a, b, c),
-                    indices: [a, b, c],
-                    player: board[a],
+                    indices: combination,
+                    player,
                 };
             }
         }
@@ -221,7 +218,7 @@ const TicTacToeScreen = ({route}) => {
     }
 
     return (
-        <View style={globalStyles.container}>
+        <ScreenWrapper>
             <Text
                 style={[
                     styles.status,
@@ -249,18 +246,20 @@ const TicTacToeScreen = ({route}) => {
                     },
                 ]}
             >
-                {[0, 1, 2].map((row) => (
-                    <View key={row} style={styles.row}>
-                        {renderCell(row * 3)}
-                        {renderCell(row * 3 + 1)}
-                        {renderCell(row * 3 + 2)}
-                    </View>
-                ))}
+            {Array(boardSize).fill(null).map((_, rowIndex) => (
+                <View key={`row-${rowIndex}`} style={styles.row}>
+                    {Array(boardSize).fill(null).map((_, colIndex) => (
+                        <React.Fragment key={`cell-${rowIndex}-${colIndex}`}>
+                            {renderCell(rowIndex * boardSize + colIndex)}
+                        </React.Fragment>
+                    ))}
+                </View>
+            ))}
             </Animated.View>
             <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
                 <Text style={styles.resetButtonText}>Herstart Spel</Text>
             </TouchableOpacity>
-        </View>
+        </ScreenWrapper>
     );
 };
 

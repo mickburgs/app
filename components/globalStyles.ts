@@ -2,7 +2,6 @@ import {StyleSheet} from "react-native";
 
 export const globalStyles = StyleSheet.create({
     container: {
-        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#f7f7f7',
@@ -20,4 +19,5 @@ export const globalStyles = StyleSheet.create({
         marginBottom: 30,
     },
 });
+
 export type GlobalStyles = typeof globalStyles;
