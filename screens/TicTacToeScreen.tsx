@@ -5,19 +5,10 @@ import {GameMode} from "../types/GameMode";
 import {Player, PlayerColor} from "../types/Player";
 import {WinningCombination} from "../types/WinningCombination";
 import {Difficulty} from "../types/Difficulty";
+import {getWinningCombinations} from "../utils/gameUtils";
 
 const BOARD_SIZE = 9;
 const EMPTY_BOARD: Player[] = Array(BOARD_SIZE).fill(null);
-const winningCombinations = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-];
 const AI_PLAYER = Player.O;
 
 const TicTacToeScreen = ({route}) => {
@@ -103,7 +94,7 @@ const TicTacToeScreen = ({route}) => {
     }
 
     const findWinningMove = (board: Player[], player: Player) => {
-        for (let combination of winningCombinations) {
+        for (let combination of getWinningCombinations()) {
             const [a, b, c] = combination;
             const winningMove = getWinningMove(board, a, b, c, player);
             if (winningMove === null) {
@@ -115,7 +106,7 @@ const TicTacToeScreen = ({route}) => {
     }
 
     const makeAIMove = (board: Player[]) => {
-        for (let combination of winningCombinations) {
+        for (let combination of getWinningCombinations()) {
             const [a, b, c] = combination;
             const winningMove = getWinningMove(board, a, b, c, AI_PLAYER);
             if (winningMove === null) {
@@ -172,7 +163,7 @@ const TicTacToeScreen = ({route}) => {
     };
 
     const getWinningCombination = (board): WinningCombination => {
-        for (let combination of winningCombinations) {
+        for (let combination of getWinningCombinations()) {
             const [a, b, c] = combination;
             if (board[a] && board[a] === board[b] && board[a] === board[c]) {
                 return {
