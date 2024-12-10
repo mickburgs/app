@@ -3,7 +3,8 @@
     "name": "Boter kaas en eiren",
     "slug": "boter-kaas-en-eieren",
     "icon": "./assets/icon.png",
-    "version": "1.0.1",
+    "version": "1.0.2",
+    "runtimeVersion": "1.0.0",
     "platforms": [
       "ios",
       "android",
@@ -29,9 +30,6 @@
     "owner": "mickburgs",
     "ios": {
       "bundleIdentifier": "nl.mick.tictactoe"
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
     },
     "updates": {
       "url": "https://u.expo.dev/822973b5-4cce-4ccd-a540-b4bf19031dd9"

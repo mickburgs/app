@@ -16,10 +16,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#4caf50',
         borderRadius: 10,
         alignItems: 'center',
-        shadowColor: '#000',
+        shadowColor: 'black',
+        shadowRadius: 20,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
-        shadowRadius: 4,
         elevation: 3,
     },
     buttonText: {

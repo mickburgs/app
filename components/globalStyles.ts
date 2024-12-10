@@ -11,11 +11,11 @@ export const globalStyles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 30,
-        color: '#333',
+        color: 'white',
     },
     subtitle: {
         fontSize: 20,
-        color: '#555',
+        color: 'white',
         marginBottom: 30,
     },
 });

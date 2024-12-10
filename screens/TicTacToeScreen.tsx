@@ -201,7 +201,11 @@ const TicTacToeScreen = ({route}) => {
                     transform: [{scale: cellAnimations[index]}],
                 }}
             >
-                <Text style={[styles.cellText, {color: getPlayerColor(board[index])}]}>
+                <Text style={[
+                    styles.cellText,
+                    {color: getPlayerColor(board[index])},
+                    board[index] && styles.textShadow,
+                ]}>
                     {board[index]}
                 </Text>
             </Animated.View>
@@ -209,7 +213,7 @@ const TicTacToeScreen = ({route}) => {
     );
 
     const getPlayerColor = (player: Player): string => {
-        if (!player) return '#555';
+        if (!player) return 'white';
         return PlayerColor[player];
     }
 
@@ -219,46 +223,46 @@ const TicTacToeScreen = ({route}) => {
 
     return (
         <ScreenWrapper>
-            <Text
-                style={[
-                    styles.status,
-                    {color: getPostGameColor()},
-                ]}
-            >
-                {winner
-                    ? `Winnaar: ${winner.player}`
-                    : `Volgende speler: ${isXNext ? Player.X : Player.O}`}
-            </Text>
-            <Animated.View
-                style={[
-                    styles.board,
-                    {
-                        shadowColor: 'black',
-                        shadowOpacity: boardGlow,
-                        shadowRadius: 20,
-                        borderColor: boardGlow.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [
-                                'black',
-                                getPostGameColor()
-                            ],
-                        }),
-                    },
-                ]}
-            >
-            {Array(boardSize).fill(null).map((_, rowIndex) => (
-                <View key={`row-${rowIndex}`} style={styles.row}>
-                    {Array(boardSize).fill(null).map((_, colIndex) => (
-                        <React.Fragment key={`cell-${rowIndex}-${colIndex}`}>
-                            {renderCell(rowIndex * boardSize + colIndex)}
-                        </React.Fragment>
+                <Text
+                    style={[
+                        styles.status,
+                        {color: getPostGameColor()},
+                    ]}
+                >
+                    {winner
+                        ? `Winnaar: ${winner.player}`
+                        : `Volgende speler: ${isXNext ? Player.X : Player.O}`}
+                </Text>
+                <Animated.View
+                    style={[
+                        styles.board,
+                        {
+                            // shadowColor: 'black',
+                            // shadowOpacity: boardGlow,
+                            // shadowRadius: 20,
+                            borderColor: boardGlow.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [
+                                    'black',
+                                    getPostGameColor()
+                                ],
+                            }),
+                        },
+                    ]}
+                >
+                    {Array(boardSize).fill(null).map((_, rowIndex) => (
+                        <View key={`row-${rowIndex}`} style={styles.row}>
+                            {Array(boardSize).fill(null).map((_, colIndex) => (
+                                <React.Fragment key={`cell-${rowIndex}-${colIndex}`}>
+                                    {renderCell(rowIndex * boardSize + colIndex)}
+                                </React.Fragment>
+                            ))}
+                        </View>
                     ))}
-                </View>
-            ))}
-            </Animated.View>
-            <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
-                <Text style={styles.resetButtonText}>Herstart Spel</Text>
-            </TouchableOpacity>
+                </Animated.View>
+                <TouchableOpacity style={styles.resetButton} onPress={resetGame}>
+                    <Text style={styles.resetButtonText}>Opnieuw spelen</Text>
+                </TouchableOpacity>
         </ScreenWrapper>
     );
 };
@@ -272,11 +276,14 @@ const styles = StyleSheet.create({
     board: {
         width: 300,
         height: 300,
-        backgroundColor: '#fff',
+        backgroundColor: 'transparent',
         borderWidth: 2,
         borderColor: '#333',
         borderRadius: 10,
         overflow: 'hidden',
+        elevation: 5,
+        shadowColor: '#000',
+        boxShadow: '0 6px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)',
     },
     row: {
         flex: 1,
@@ -291,7 +298,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fafafa',
     },
     cellText: {
-        fontSize: 36,
+        fontSize: 50,
         fontWeight: 'bold',
     },
     resetButton: {
@@ -306,6 +313,11 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#fff',
     },
+    textShadow: {
+        textShadowColor: 'rgba(0, 0, 0, 0.6)',
+        textShadowOffset: {width: 2, height: 2},
+        textShadowRadius: 5,
+    }
 });
 
 export default TicTacToeScreen;
