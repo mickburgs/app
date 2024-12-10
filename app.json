@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Boter kaas en eiren",
+    "name": "Boter kaas en eieren",
     "slug": "boter-kaas-en-eieren",
     "icon": "./assets/icon.png",
-    "version": "1.0.2",
-    "runtimeVersion": "1.0.0",
+    "version": "1.0.3",
+    "runtimeVersion": "1.0.3",
     "platforms": [
       "ios",
       "android",
