@@ -22,15 +22,14 @@ const SettingsScreen = ({navigation, route}) => {
         <ScreenWrapper>
             <View style={styles.settingsBlock}>
                 <Text style={styles.label}>Aantal vakjes</Text>
-                <View style={styles.pickerContainer}>
+                <View>
                     <Picker
-                        selectedValue={boardSize}
-                        style={styles.picker}
+                        selectedValue={String(boardSize)}
                         onValueChange={(value) => setBoardSize(Number(value))}
                     >
                         {Array.from({length: MAX_BOARD_SIZE - MIN_BOARD_SIZE + 1}, (_, i) => i + MIN_BOARD_SIZE).map(
                             (size) => (
-                                <Picker.Item key={size} label={`${size}x${size}`} value={size}/>
+                                <Picker.Item key={size} label={`${size}x${size}`} value={String(size)}/>
                             )
                         )}
                     </Picker>
@@ -40,10 +39,9 @@ const SettingsScreen = ({navigation, route}) => {
             {mode === GameMode.Single && (
                 <View style={styles.settingsBlock}>
                     <Text style={styles.label}>Hoe moeilijk</Text>
-                    <View style={styles.pickerContainer}>
+                    <View>
                         <Picker
                             selectedValue={difficulty}
-                            style={styles.picker}
                             onValueChange={(value) => setDifficulty(value)}
                         >
                             <Picker.Item label="Makkelijk" value={Difficulty.Easy}/>
@@ -64,21 +62,11 @@ const SettingsScreen = ({navigation, route}) => {
 const styles = StyleSheet.create({
     settingsBlock: {
         marginBottom: 20,
+        width: 150
     },
     label: {
         fontSize: 18,
         marginBottom: 5,
-    },
-    pickerContainer: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 5,
-        backgroundColor: '#f9f9f9',
-        overflow: 'hidden',
-    },
-    picker: {
-        height: 50,
-        width: 200,
     },
 });
 
